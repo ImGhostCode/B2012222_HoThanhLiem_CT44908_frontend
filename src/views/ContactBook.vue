@@ -8,7 +8,12 @@
                 Danh bạ
                 <i class="fas fa-address-book"></i>
             </h4>
-            <ContactList v-if="filteredContactsCount > 0" :contacts="filteredContacts" v-model:activeIndex="activeIndex" />
+            <p>Sắp xếp:
+                <span class="mx-4"><input type="checkbox" name="name" id="name" v-model="sortByName"> Tên</span>
+                <span class="mx-4"><input type="checkbox" name="favorite" id="favorite" v-model="sortByFavorite"> Yêu
+                    thích</span>
+            </p>
+            <ContactList v-if="renderContactsCount > 0" :contacts="renderContacts" v-model:activeIndex="activeIndex" />
             <p v-else>Không có liên hệ nào.</p>
             <div class="mt-3 row justify-content-around align-items-center">
                 <button class="btn btn-sm btn-primary" @click="refreshList()">
@@ -57,6 +62,9 @@ export default {
             contacts: [],
             activeIndex: -1,
             searchText: "",
+            sortByName: false,
+            sortByFavorite: false,
+            renderContact: []
         };
     },
     watch: {
@@ -65,6 +73,13 @@ export default {
         searchText() {
             this.activeIndex = -1;
         },
+        sortByName() {
+            console.log(this.sortByName);
+        },
+        sortByFavorite() {
+            console.log(this.sortByFavorite);
+        }
+
     },
     computed: {
         // Chuyển các đối tượng contact thành chuỗi để tiện cho tìm kiếm.
@@ -74,19 +89,40 @@ export default {
                 return [name, email, address, phone].join("");
             });
         },
-        // Trả về các contact có chứa thông tin cần tìm kiếm.
-        filteredContacts() {
-            if (!this.searchText) return this.contacts;
-            return this.contacts.filter((_contact, index) =>
-                this.contactStrings[index].includes(this.searchText)
-            );
+        // Trả về các contact có chứa thông tin cần tìm kiếm và đã được sắp xếp.
+        renderContacts() {
+            let resultSearch = [...this.contacts]
+            if (this.searchText) {
+                resultSearch = this.contacts.filter((_contact, index) =>
+                    this.contactStrings[index].includes(this.searchText))
+            }
+
+            let resutlSort = [...resultSearch]
+            if (this.sortByName) {
+                resutlSort.sort((a, b) => {
+                    const lastNameA = a.name.split(' ').slice(-1).join(' ')
+                    const lastNameB = b.name.split(' ').slice(-1).join(' ')
+                    return lastNameA > lastNameB
+                })
+
+            }
+            if (this.sortByFavorite) {
+                resutlSort = resutlSort.filter((_contact, id) => {
+                    return _contact.favorite === true
+                })
+            }
+
+            return resutlSort
+        },
+        sortContacts() {
+
         },
         activeContact() {
             if (this.activeIndex < 0) return null;
-            return this.filteredContacts[this.activeIndex];
+            return this.renderContacts[this.activeIndex];
         },
-        filteredContactsCount() {
-            return this.filteredContacts.length;
+        renderContactsCount() {
+            return this.renderContacts.length;
         },
     },
     methods: {
